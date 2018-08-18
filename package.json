@@ -1,0 +1,48 @@
+{
+  "name": "dispatcher",
+  "version": "0.0.0-development",
+  "description": "👨‍✈️ Command dispatcher for Hershel",
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "prettier ./**/*.{js,ts,json,md} -l",
+    "build": "tsc",
+    "test": "npm run lint && nyc ava",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "release": "semantic-release"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hershel/dispatcher.git"
+  },
+  "keywords": [
+    "discord.js",
+    "discord",
+    "hershel",
+    "bot"
+  ],
+  "author": "HelloEdit (https://github.com/HelloEdit)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hershel/dispatcher/issues"
+  },
+  "homepage": "https://github.com/hershel/dispatcher#readme",
+  "devDependencies": {
+    "@types/node": "^10.7.1",
+    "@types/sinon": "^5.0.1",
+    "ava": "^1.0.0-beta.7",
+    "discord.js": "^11.4.2",
+    "hershel": "^2.0.0",
+    "nyc": "^12.0.2",
+    "prettier": "^1.14.2",
+    "semantic-release": "^15.9.8",
+    "sinon": "^6.1.4",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@types/koa-compose": "^3.2.2",
+    "koa-compose": "^4.1.0",
+    "ow": "^0.6.0",
+    "path-to-regexp": "^2.2.1"
+  }
+}

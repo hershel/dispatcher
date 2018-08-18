@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "declaration": true,
+    "sourceMap": false,
+    "outDir": "./dist",
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["./test"]
+}
