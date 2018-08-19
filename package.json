@@ -30,6 +30,7 @@
     "@types/node": "^10.7.1",
     "@types/sinon": "^5.0.1",
     "ava": "^1.0.0-beta.7",
+    "coveralls": "^3.0.2",
     "discord.js": "^11.4.2",
     "hershel": "^2.0.0",
     "nyc": "^12.0.2",
