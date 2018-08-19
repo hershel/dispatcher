@@ -1,5 +1,4 @@
 import { Command } from '../src'
-import { IDispatcher } from '../src/types/Dispatcher'
 
 export class TestCommand extends Command {
   constructor() {
