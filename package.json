@@ -44,6 +44,6 @@
     "@types/koa-compose": "^3.2.2",
     "koa-compose": "^4.1.0",
     "ow": "^0.6.0",
-    "path-to-regexp": "^2.2.1"
+    "path-to-regexp": "^2.3.0"
   }
 }
