@@ -1,5 +1,5 @@
 {
-  "name": "dispatcher",
+  "name": "@hershel/dispatcher",
   "version": "0.0.0-development",
   "description": "👨‍✈️ Command dispatcher for Hershel",
   "main": "dist/index.js",
