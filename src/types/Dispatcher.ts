@@ -5,25 +5,25 @@ import * as compose from 'koa-compose'
 import { Dispatcher } from '../Dispatcher'
 import { Command } from '../Command'
 
-export declare namespace IDispatcher {
-  type middleware = compose.Middleware<Context>
+export namespace IDispatcher {
+  export type middleware = compose.Middleware<Context>
 
-  interface PrefixData {
+  export interface PrefixData {
     detected: boolean
     length: number
     name: string
   }
 
-  interface CommandData {
+  export interface CommandData {
     command: Command
     name: string
   }
 
-  interface ArgumentData {
+  export interface ArgumentData {
     keys: pathToRegexp.Key[]
   }
 
-  interface State {
+  export interface State {
     argument: ArgumentData
     dispatcher: Dispatcher
     command: CommandData
@@ -37,7 +37,7 @@ export declare namespace IDispatcher {
     }
   }
 
-  interface Options {
+  export interface Options {
     /** command prefix */
     prefix?: Iterable<string>
     /** path-to-regexp options */

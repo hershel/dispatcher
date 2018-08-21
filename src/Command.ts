@@ -1,13 +1,6 @@
 import * as pathToRegexp from 'path-to-regexp'
 
-import { IDispatcher } from './types/Dispatcher'
-
-interface Options {
-  name: string
-  aliases: string[]
-  argument: string
-  options: pathToRegexp.RegExpOptions
-}
+import { ICommand, IDispatcher } from './types/'
 
 export abstract class Command {
   /** represents the ID of the command */
@@ -19,7 +12,7 @@ export abstract class Command {
   /** options for path-to-regexp */
   public readonly options?: pathToRegexp.RegExpOptions
 
-  constructor(options: Partial<Options> = {}) {
+  constructor(options: Partial<ICommand.Options> = {}) {
     this.argument = options.argument
     this.aliases = options.aliases
     this.options = options.options

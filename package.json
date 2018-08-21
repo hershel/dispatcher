@@ -3,6 +3,7 @@
   "version": "0.0.0-development",
   "description": "👨‍✈️ Command dispatcher for Hershel",
   "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "lint": "prettier ./**/*.{js,ts,json,md} -l",
     "build": "tsc",
