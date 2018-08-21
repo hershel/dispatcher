@@ -26,6 +26,9 @@
     "url": "https://github.com/hershel/dispatcher/issues"
   },
   "homepage": "https://github.com/hershel/dispatcher#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@types/node": "^10.7.1",
     "@types/sinon": "^5.0.1",
