@@ -23,7 +23,7 @@ export abstract class Command {
    * Command logic
    * @param context context
    */
-  public abstract action(context: IDispatcher.Context): void | Promise<void>
+  public abstract action(context: IDispatcher.Context): any | Promise<any>
 
   /**
    * Get all possible aliases for this command
