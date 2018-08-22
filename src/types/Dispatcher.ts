@@ -14,8 +14,8 @@ export namespace IDispatcher {
     name: string
   }
 
-  export interface CommandData {
-    command: Command
+  export interface CommandData<C extends Command> {
+    command: C
     name: string
   }
 
@@ -23,10 +23,10 @@ export namespace IDispatcher {
     keys: pathToRegexp.Key[]
   }
 
-  export interface State {
+  export interface State<C extends Command = Command> {
     argument: ArgumentData
     dispatcher: Dispatcher
-    command: CommandData
+    command: CommandData<C>
     prefix: PrefixData
   }
 
