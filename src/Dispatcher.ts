@@ -190,6 +190,7 @@ export class Dispatcher {
     if (!path) return
 
     const content = message.content
+      .replace(/\s+/g, ' ')
       .replace(prefix.name, '')
       .replace(command.name, '')
       .trim()
