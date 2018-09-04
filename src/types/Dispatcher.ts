@@ -23,17 +23,17 @@ export namespace IDispatcher {
     keys: pathToRegexp.Key[]
   }
 
-  export interface State<C extends Command = Command> {
+  export interface State<C extends Command> {
     argument: ArgumentData
     dispatcher: Dispatcher
     command: CommandData<C>
     prefix: PrefixData
   }
 
-  export interface Context extends App.Context {
-    params: Record<string, string>
+  export interface Context<C extends Command = Command> extends App.Context {
+    params: Record<string, string | any>
     state: {
-      dispatcher: State
+      dispatcher: State<C>
     }
   }
 
