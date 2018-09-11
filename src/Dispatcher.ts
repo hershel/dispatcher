@@ -33,7 +33,8 @@ export class Dispatcher {
   static DEFAULT_PATHTOREGEXP_OPTIONS: pathToRegexp.RegExpOptions &
     pathToRegexp.ParseOptions = {
     end: false,
-    delimiter: ' '
+    delimiter: ' ',
+    delimiters: [' ']
   }
 
   /**
