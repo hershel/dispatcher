@@ -104,3 +104,13 @@ test('should verify if `.action` exist on command object', async t => {
     })
   )
 })
+
+test('set custom execute command function', t => {
+  const dispatcher = new Dispatcher()
+
+  const noop = () => {}
+  dispatcher.setCustomExecuteCommand(noop)
+
+  // @ts-ignore
+  t.is(dispatcher.executeCommand, noop)
+})

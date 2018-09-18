@@ -239,6 +239,19 @@ export class Dispatcher {
   }
 
   /**
+   * Set custom executeCommand function
+   * @param fn custom executeCommand function
+   */
+  public setCustomExecuteCommand(fn: IDispatcher.middleware) {
+    this.throwIfAlreadyStarted('cannot set custom function')
+    ow(fn, ow.function.label('custom executeCommand'))
+
+    this.executeCommand = fn
+
+    return this
+  }
+
+  /**
    * Throw if dispatcher is already started
    * @param msg message to throw
    */
