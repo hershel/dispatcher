@@ -41,6 +41,7 @@ export class Dispatcher {
    * Dispatcher middleware
    */
   public commands() {
+    this.middleware.push(this.executeCommand)
     const composed = compose(this.middleware)
 
     const dispatch: App.middleware = async (ctx: IDispatcher.Context, next) => {
@@ -53,8 +54,6 @@ export class Dispatcher {
       this.extractArgument(ctx)
 
       await composed(ctx)
-
-      await this.executeCommand(ctx)
 
       next()
     }
@@ -228,13 +227,15 @@ export class Dispatcher {
    * Execute command in the context
    * @param ctx context
    */
-  private async executeCommand(ctx: IDispatcher.Context) {
+  private executeCommand: IDispatcher.middleware = async (ctx, next) => {
     const { command } = ctx.state.dispatcher.command
 
     if (!command) return
-    if (typeof command.action !== 'function') return
+    if (typeof command.action !== 'function') return next()
 
     await command.action(ctx)
+
+    next()
   }
 
   /**

@@ -6,6 +6,8 @@ import * as commands from '../command.helper'
 import { createContext } from '../helper'
 
 test.serial('should execute command', async t => {
+  t.plan(4)
+
   const dispatcher = new Dispatcher({
     prefix: ['!']
   })
@@ -29,13 +31,17 @@ test.serial('should execute command', async t => {
   t.truthy(context.state.dispatcher.command.command)
 
   // @ts-ignore
-  await dispatcher.executeCommand(context)
+  await dispatcher.executeCommand(context, async () => {
+    t.pass()
+  })
 
   t.true(commandStub.calledOnce)
   t.true(commandStub.calledWith(context))
 })
 
 test.serial('should verify if command exist in state', async t => {
+  t.plan(2)
+
   const dispatcher = new Dispatcher({
     prefix: ['!']
   })
@@ -58,13 +64,19 @@ test.serial('should verify if command exist in state', async t => {
 
   context.state.dispatcher.command.command = null
 
-  // @ts-ignore
-  await t.notThrowsAsync(dispatcher.executeCommand(context))
+  await t.notThrowsAsync(
+    // @ts-ignore
+    dispatcher.executeCommand(context, async () => {
+      t.pass()
+    })
+  )
 
   t.false(commandStub.called)
 })
 
 test('should verify if `.action` exist on command object', async t => {
+  t.plan(3)
+
   const dispatcher = new Dispatcher({
     prefix: ['!']
   })
@@ -85,6 +97,10 @@ test('should verify if `.action` exist on command object', async t => {
 
   t.truthy(context.state.dispatcher.command.command)
 
-  // @ts-ignore
-  await t.notThrowsAsync(dispatcher.executeCommand(context))
+  await t.notThrowsAsync(
+    // @ts-ignore
+    dispatcher.executeCommand(context, async () => {
+      t.pass()
+    })
+  )
 })
