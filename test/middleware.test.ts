@@ -1,101 +1,179 @@
 import { stub, spy } from 'sinon'
 import test from 'ava'
 
-import { Dispatcher, IDispatcher, createDispatcherContext } from '../src'
-import { TestCommand } from './command.helper'
-import { createContext } from './helper'
+import { createTestContext, createHershelContext } from './dispatcher.helper'
+import * as commands from './command.helper'
+import { Dispatcher } from '../src'
 
-test.serial.cb('`commands` middleware should execute command', t => {
-  t.plan(2)
+const noop = async () => {}
 
+test('`.commands` should add `executeCommand` only once', t => {
   const dispatcher = new Dispatcher({
     prefix: ['!']
   })
-
-  const command = new TestCommand()
-
-  const commandStub = stub(command, 'action')
-
-  dispatcher.add(command)
-
-  const commmands = dispatcher.commands()
-  const context = createContext({
-    content: '!test'
-  }) as IDispatcher.Context
-
-  createDispatcherContext(context, dispatcher)
 
   // @ts-ignore
-  commmands(context, () => {
-    t.true(commandStub.called)
-    t.true(commandStub.calledOnce)
+  t.is(dispatcher.middleware.length, 0)
 
-    t.end()
-  })
-})
-
-test.cb('`commands` middleware should not handle message', t => {
-  t.plan(1)
-
-  const dispatcher = new Dispatcher({
-    prefix: ['!']
-  })
-
-  const command = new TestCommand()
-
-  const commandStub = stub(command, 'action')
-
-  dispatcher.add(command)
-
-  const commmands = dispatcher.commands()
-  const context = createContext({
-    content: '!test'
-  }) as IDispatcher.Context
-
-  context.message.author.bot = true
-
-  createDispatcherContext(context, dispatcher)
+  dispatcher.commands()
 
   // @ts-ignore
-  commmands(context, () => {
-    t.false(commandStub.called)
+  t.is(dispatcher.middleware.length, 1)
+  t.true(dispatcher.started)
 
-    t.end()
-  })
+  dispatcher.commands()
+
+  // @ts-ignore
+  t.is(dispatcher.middleware.length, 1)
 })
 
-test.serial.cb('execute dispatcher middleware following the lifecycle', t => {
-  t.plan(4)
-
+test('`.commands` middleware should mutate context', async t => {
   const dispatcher = new Dispatcher({
     prefix: ['!']
   })
 
-  const command = new TestCommand()
+  const test = new commands.Test()
+  dispatcher.register(test)
 
-  const commandStub = stub(command, 'action')
+  const callback = spy()
+  const context = createHershelContext({
+    message: { content: '!test commands' }
+  })
+
+  t.is(typeof context.state.dispatcher, 'undefined')
+
+  await dispatcher.commands()(context, callback)
+
+  t.true(callback.calledOnce)
+  t.is(typeof context.state.dispatcher, 'object')
+
+  t.is(context.state.dispatcher.command.resolved, test)
+  t.is(context.state.dispatcher.prefix.content, '!')
+  t.deepEqual(context.params, { id: undefined, name: 'commands' })
+})
+
+test('`.commands` middleware should not handle message from bot', async t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
+
+  const test = new commands.Test()
+  const action = stub(test, 'action')
+  dispatcher.register(test)
+
   const callback = spy()
 
-  dispatcher.add(command)
-  dispatcher.use((ctx, next) => {
-    callback(ctx)
-    next()
-  })
+  {
+    const context = createTestContext({
+      message: { content: '!test', author: { bot: true } }
+    })
 
-  const commmands = dispatcher.commands()
-  const context = createContext({
-    content: '!test'
-  }) as IDispatcher.Context
-
-  createDispatcherContext(context, dispatcher)
-
-  // @ts-ignore
-  commmands(context, () => {
-    t.true(commandStub.calledOnce)
+    await dispatcher.commands()(context, callback)
     t.true(callback.calledOnce)
-    t.true(callback.calledWith(context))
-    t.true(callback.calledBefore(commandStub))
+    t.true(action.notCalled)
+  }
 
-    t.end()
+  callback.resetHistory()
+  action.resetHistory()
+
+  {
+    const context = createTestContext({
+      message: { content: '!test', author: { id: '1' } },
+      app: { id: '1' }
+    })
+
+    await dispatcher.commands()(context, callback)
+
+    t.true(callback.calledOnce)
+    t.true(action.notCalled)
+  }
+})
+
+test('`.commands` middleware should throw on error', async t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
   })
+
+  const context = createTestContext({
+    message: { content: '!test throw' }
+  })
+
+  const test = new commands.Test()
+  test.action = async () => {
+    throw new Error('Throw on action')
+  }
+  dispatcher.register(test)
+
+  await t.throwsAsync(dispatcher.commands()(context, noop), {
+    message: 'Throw on action'
+  })
+})
+
+test('`.commands` middleware should execute command', async t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
+
+  const context = createTestContext({
+    message: { content: '!test execute' }
+  })
+
+  const test = new commands.Test()
+  const action = stub(test, 'action')
+  dispatcher.register(test)
+
+  const callback = spy()
+
+  await dispatcher.commands()(context, callback)
+
+  t.true(action.calledOnceWithExactly(context))
+  t.true(callback.calledAfter(action))
+  t.true(callback.calledOnce)
+})
+
+test('`.commands` middleware should return next() ASAP', async t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
+
+  const test = new commands.Test()
+  const action = stub(test, 'action')
+  dispatcher.register(test)
+
+  const callback = spy()
+
+  // should return next when prefix is not detected
+  {
+    const context = createTestContext({
+      message: { content: 'hello u' }
+    })
+
+    await dispatcher.commands()(context, callback)
+
+    const { prefix, command } = context.state.dispatcher
+    t.is(command.resolved, null)
+    t.false(prefix.detected)
+
+    t.true(callback.calledOnce)
+    t.true(action.notCalled)
+  }
+
+  callback.resetHistory()
+  action.resetHistory()
+
+  // should return next when no valid command detected
+  {
+    const context = createTestContext({
+      message: { content: '!hi' }
+    })
+
+    await dispatcher.commands()(context, callback)
+
+    const { prefix, command } = context.state.dispatcher
+    t.is(command.alias, 'hi')
+    t.true(prefix.detected)
+
+    t.true(callback.calledOnce)
+    t.true(action.notCalled)
+  }
 })
