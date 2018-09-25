@@ -1,140 +1,126 @@
 import test from 'ava'
 
-import { Dispatcher } from '../src'
 import * as commands from './command.helper'
+import { Dispatcher } from '../src'
 
-test('register command in dispatcher', t => {
-  const dispatcher = new Dispatcher()
+test('register command in registry', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
 
-  t.notThrows(() => dispatcher.add(new commands.TestCommand()))
-})
-
-test('command should be added to registry', t => {
-  const dispatcher = new Dispatcher()
-
-  const command = new commands.TestCommand()
-  dispatcher.add(command)
+  const test = new commands.Test()
+  dispatcher.register(test)
 
   const { registry } = dispatcher
+  const command = registry.resolve(test.name)
 
-  const getCommand = registry.resolve('test')
+  t.is(command, test)
+})
 
-  t.is(command, getCommand, 'should be the same object')
+test('`resolve` should return null on unknown command', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
+
+  const { registry } = dispatcher
+  const command = registry.resolve('test')
+
+  t.is(command, null)
 })
 
 test('should add all aliases in registry', t => {
-  const dispatcher = new Dispatcher()
-
-  const command = new commands.TestCommand()
-
-  dispatcher.add(command)
-
-  const { registry } = dispatcher
-
-  t.is(registry.commands.size, 2)
-
-  for (let alias in command.values()) {
-    t.is(registry.resolve(alias), command)
-  }
-})
-
-test('`.delete` should delete the alias specified with string', t => {
-  const dispatcher = new Dispatcher()
-
-  dispatcher.add(new commands.TestCommand())
-
-  const { registry } = dispatcher
-
-  registry.delete('test')
-
-  t.is(registry.commands.size, 1)
-  t.deepEqual([...registry.commands.keys()], ['t'])
-})
-
-test('`.delete` should delete all aliases with command object', t => {
-  const dispatcher = new Dispatcher()
-
-  const command = new commands.TestCommand()
-
-  dispatcher.add(command)
-
-  const { registry } = dispatcher
-
-  registry.delete(command)
-
-  t.is(registry.commands.size, 0)
-})
-
-test('should throws on conflict', t => {
-  const dispatcher = new Dispatcher()
-
-  dispatcher.add(new commands.TestCommand())
-
-  t.throws(() => dispatcher.add(new commands.ConflictNameWithTestCommand()), {
-    message: '`test` alias is already registered by a command'
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
   })
 
-  t.throws(() => dispatcher.add(new commands.ConflictAliasWithTestCommand()), {
-    message: '`t` alias is already registered by a command'
+  const test = new commands.Test()
+  dispatcher.register(test)
+
+  const { registry } = dispatcher
+
+  t.is(registry.size, 2)
+
+  t.deepEqual([...registry.commands.keys()], ['test', 't'])
+})
+
+test('delete command with string', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
   })
-})
 
-test('should resolve command with command name', t => {
-  const dispatcher = new Dispatcher()
-
-  const command = new commands.TestCommand()
-
-  dispatcher.add(command)
+  const test = new commands.Test()
+  dispatcher.register(test)
 
   const { registry } = dispatcher
 
-  t.is(registry.resolve('test'), command)
+  t.is(registry.size, 2)
+
+  registry.delete(test.name)
+
+  t.is(registry.size, 1)
 })
 
-test('should resolve command with a command alias', t => {
-  const dispatcher = new Dispatcher()
+test('delete command with string array', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
 
-  const command = new commands.TestCommand()
-
-  dispatcher.add(command)
+  const test = new commands.Test()
+  dispatcher.register(test)
 
   const { registry } = dispatcher
 
-  t.is(registry.resolve('t'), command)
+  t.is(registry.size, 2)
+
+  registry.delete([test.name, test.aliases[0]])
+
+  t.is(registry.size, 0)
 })
 
-test('`resolve` should return null on unknow command', t => {
-  const dispatcher = new Dispatcher()
+test('delete command with command object', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
+
+  const test = new commands.Test()
+  dispatcher.register(test)
 
   const { registry } = dispatcher
 
-  t.is(registry.resolve('test'), null)
+  t.is(registry.size, 2)
+
+  registry.delete(test)
+
+  t.is(registry.size, 0)
 })
 
-test('`clear` should clear registry', t => {
-  const dispatcher = new Dispatcher()
+test('delete command with command object array', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
 
-  dispatcher.add(new commands.TestCommand())
+  const test = new commands.Test()
+  const noArg = new commands.NoArgument()
+  dispatcher.register(test)
+  dispatcher.register(noArg)
 
   const { registry } = dispatcher
 
-  t.is(registry.commands.size, 2)
+  t.is(registry.size, 4)
 
-  registry.clear()
+  registry.delete([test, noArg])
 
-  t.is(registry.commands.size, 0)
+  t.is(registry.size, 0)
 })
 
-test('should add a command without aliases', t => {
-  const dispatcher = new Dispatcher()
+test('throw on conflict', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
 
-  t.notThrows(() => dispatcher.add(new commands.NoAliases()))
-})
+  dispatcher.register(new commands.Test())
 
-test('should throws when trying to register invalid command', t => {
-  const dispatcher = new Dispatcher()
-
-  t.throws(() => dispatcher.add(new commands.invalid.NoName()))
-  // @ts-ignore
-  t.throws(() => dispatcher.add(new commands.invalid.NoInstanceOfCommand()))
+  t.throws(() => dispatcher.register(new commands.ConflictWithTest()), {
+    message: '`test` is already registered by a command'
+  })
 })
