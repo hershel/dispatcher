@@ -1,56 +1,57 @@
 import * as pathToRegexp from 'path-to-regexp'
-import { Application as App } from 'hershel'
 import * as compose from 'koa-compose'
-import ow from 'ow'
 
-import { IDispatcher } from './types/Dispatcher'
+import { Dispatch, Command } from './types'
 import { Registry } from './Registry'
-import { Command } from './Command'
+import { assert } from './util'
 
-export class Dispatcher {
-  private middleware: IDispatcher.middleware[] = []
-  private _started = false
+type ContextFunction<R = void> = (ctx: Dispatch.Context) => R
 
-  public options: IDispatcher.Options
-  public registry = new Registry()
-  public prefixes: Set<string>
+export const argument = Symbol.for('@hershel/dispatcher.argument')
 
-  constructor(options: IDispatcher.Options = {}) {
-    ow(options, ow.object.label('options'))
+export class Dispatcher<C extends Command = Command> {
+  private middleware: Dispatch.middleware<C>[] = []
+  private _registry = new Registry<C>()
+  private options: Dispatch.Options
+  private _prefixes: Set<string>
+  private _started: boolean
+
+  constructor(options: Dispatch.Options) {
+    assert(typeof options === 'object', 'options should be an object')
+
+    this._prefixes = new Set(options.prefix)
 
     options.pathToRegexp = {
-      ...Dispatcher.DEFAULT_PATHTOREGEXP_OPTIONS,
+      ...Dispatcher.PATHTOREGEXP_DEFAULT,
       ...options.pathToRegexp
     }
 
     this.options = options
-    this.prefixes = new Set(options.prefix)
-  }
-
-  /**
-   * Static options for pathToRegexp
-   */
-  static DEFAULT_PATHTOREGEXP_OPTIONS: pathToRegexp.RegExpOptions &
-    pathToRegexp.ParseOptions = {
-    end: false,
-    delimiter: ' ',
-    delimiters: [' ']
   }
 
   /**
    * Dispatcher middleware
    */
   public commands() {
-    this.middleware.push(this.executeCommand)
+    if (!this.started) {
+      this.use(this.executeCommand)
+      this._started = true
+    }
+
     const composed = compose(this.middleware)
 
-    const dispatch: App.middleware = async (ctx: IDispatcher.Context, next) => {
-      createDispatcherContext(ctx, this)
-
+    const dispatch: Dispatch.middleware<C> = async (ctx, next) => {
       if (!this.shouldHandle(ctx)) return next()
 
+      createDispatcherContext(ctx)
+      const { dispatcher } = ctx.state
+
       this.extractPrefix(ctx)
+      if (!dispatcher.prefix.detected) return next()
+
       this.extractCommand(ctx)
+      if (!dispatcher.command.resolved) return next()
+
       this.extractArgument(ctx)
 
       await composed(ctx)
@@ -62,33 +63,31 @@ export class Dispatcher {
   }
 
   /**
-   * Add middleware
+   * Add new middleware inside Dispatcher
    * @param fn middleware function
    */
-  public use(fn: IDispatcher.middleware) {
+  public use(fn: Dispatch.middleware<C>) {
     this.throwIfAlreadyStarted('cannot add middleware')
-    ow(fn, ow.function.label('middleware'))
+    assert(typeof fn === 'function', 'provided middleware is not a function')
 
     this.middleware.push(fn)
-
     return this
   }
 
   /**
-   * Add command in dispatcher
+   * Add new command in Dispatcher
    * @param command command
    */
-  public add(command: Command) {
-    this.registry.register(command)
-
+  public register(command: C) {
+    this._registry.register(command)
     return this
   }
 
   /**
    * Check if dispatcher should handle the message
-   * @param context dispatcher context
+   * @param message discord message
    */
-  public shouldHandle({ message, app }: IDispatcher.Context) {
+  public shouldHandle({ message, app }: Dispatch.Context) {
     if (message.author.id === app.user.id) return false
     if (message.author.bot) return false
 
@@ -99,9 +98,9 @@ export class Dispatcher {
    * Set custom shouldHandle function
    * @param fn custom shouldHandle function
    */
-  public setCustomShouldHandle(fn: (ctx: IDispatcher.Context) => boolean) {
+  public setCustomShouldHandle(fn: ContextFunction<boolean>) {
     this.throwIfAlreadyStarted('cannot set custom function')
-    ow(fn, ow.function.label('custom shouldHandle'))
+    assert(typeof fn === 'function', 'ShouldHandle should be a function')
 
     this.shouldHandle = fn
 
@@ -110,16 +109,19 @@ export class Dispatcher {
 
   /**
    * Extract prefix from message content
-   * @param context context
+   * @param context Dispatcher context
    */
-  public extractPrefix({ message, state }: IDispatcher.Context) {
+  public extractPrefix({ message, state }: Dispatch.Context) {
     const { prefix } = state.dispatcher
     const content = message.content.trim()
 
-    // Prefix search
-    for (let p of this.prefixes) {
+    for (let p of this._prefixes) {
       if (content.startsWith(p)) {
-        Object.assign(prefix, { name: p, detected: true, length: p.length })
+        Object.assign<any, Dispatch.PrefixState>(prefix, {
+          content: p,
+          detected: true,
+          length: p.length
+        })
         break
       }
     }
@@ -129,9 +131,9 @@ export class Dispatcher {
    * Set custom extractPrefix function
    * @param fn custom extractPrefix function
    */
-  public setCustomExtractPrefix(fn: (ctx: IDispatcher.Context) => void) {
+  public setCustomExtractPrefix(fn: ContextFunction) {
     this.throwIfAlreadyStarted('cannot set custom function')
-    ow(fn, ow.function.label('custom extractPrefix'))
+    assert(typeof fn === 'function', 'ExtractPrefix should be a function')
 
     this.extractPrefix = fn
 
@@ -140,34 +142,28 @@ export class Dispatcher {
 
   /**
    * Extract command from message content
-   * @param context context
+   * @param context Dispatcher context
    */
-  public extractCommand({ message, state }: IDispatcher.Context) {
+  public extractCommand({ message, state }: Dispatch.Context) {
     const { prefix, command } = state.dispatcher
 
-    if (!prefix.detected) return
-
-    // extract command name
     const name = message.content
-      .trim()
       .slice(prefix.length)
-      .trim()
       .split(' ')[0]
+      .trim()
       .toLowerCase()
 
-    if (name.length === 0) return
-
-    command.name = name
-    command.command = this.registry.resolve(name)
+    command.alias = name
+    command.resolved = this._registry.resolve(name)
   }
 
   /**
    * Set custom extractCommand function
    * @param fn custom extractCommand function
    */
-  public setCustomExtractCommand(fn: (ctx: IDispatcher.Context) => void) {
+  public setCustomExtractCommand(fn: ContextFunction) {
     this.throwIfAlreadyStarted('cannot set custom function')
-    ow(fn, ow.function.label('custom extractCommand'))
+    assert(typeof fn === 'function', 'ExtractCommand should be a function')
 
     this.extractCommand = fn
 
@@ -176,37 +172,32 @@ export class Dispatcher {
 
   /**
    * Extract arguments from message content
-   * @param context context
+   * @param context Dispatcher context
    */
-  public extractArgument({ message, state, params }: IDispatcher.Context) {
-    let { prefix, command, argument } = state.dispatcher
-    const cmd = command.command
+  public extractArgument({ message, state, params }: Dispatch.Context) {
+    let { prefix } = state.dispatcher
+    let arg = state.dispatcher[argument]
 
-    if (!prefix.detected || !cmd) return
+    const command = state.dispatcher.command
 
-    const path = cmd.argument
-
-    // allows commands without arguments
+    const path = command.resolved.argument
     if (!path) return
 
     const content = message.content
+      .replace(prefix.content, '')
+      .replace(command.alias, '')
       .replace(/\s+/g, ' ')
-      .replace(prefix.name, '')
-      .replace(command.name, '')
       .trim()
 
-    const r =
-      pathToRegexp(path, argument.keys, {
+    const p =
+      pathToRegexp(path, arg.keys, {
         ...this.options.pathToRegexp,
-        ...cmd.options
+        ...command.resolved.options
       }).exec(content) || ([] as RegExpExecArray)
 
     Object.assign(
       params,
-      argument.keys.reduce(
-        (acc, key, i) => ({ [key.name]: r[i + 1], ...acc }),
-        {}
-      )
+      arg.keys.reduce((a, k, i) => ({ [k.name]: p[i + 1], ...a }), {})
     )
   }
 
@@ -214,9 +205,9 @@ export class Dispatcher {
    * Set custom extractArgument function
    * @param fn custom extractArgument function
    */
-  public setCustomExtractArgument(fn: (ctx: IDispatcher.Context) => void) {
+  public setCustomExtractArgument(fn: ContextFunction) {
     this.throwIfAlreadyStarted('cannot set custom function')
-    ow(fn, ow.function.label('custom extractArgument'))
+    assert(typeof fn === 'function', 'ExtractArgument should be a function')
 
     this.extractArgument = fn
 
@@ -224,55 +215,66 @@ export class Dispatcher {
   }
 
   /**
-   * Execute command in the context
-   * @param ctx context
+   * ExecuteCommand middleware for Dispatcher
    */
-  private executeCommand: IDispatcher.middleware = async (ctx, next) => {
-    const { command } = ctx.state.dispatcher.command
+  public executeCommand: Dispatch.middleware<C> = async (ctx, next) => {
+    const { resolved } = ctx.state.dispatcher.command
 
-    if (!command) return
-    if (typeof command.action !== 'function') return next()
-
-    await command.action(ctx)
+    await resolved.action(ctx)
 
     next()
   }
 
   /**
-   * Set custom executeCommand function
-   * @param fn custom executeCommand function
+   * Throw if Dispatcher is already started
+   * @param message message to throw
    */
-  public setCustomExecuteCommand(fn: IDispatcher.middleware) {
-    this.throwIfAlreadyStarted('cannot set custom function')
-    ow(fn, ow.function.label('custom executeCommand'))
-
-    this.executeCommand = fn
-
-    return this
+  private throwIfAlreadyStarted(message: string) {
+    if (this._started) {
+      throw new Error(`${message} while dispatcher is already started`)
+    }
   }
 
   /**
-   * Throw if dispatcher is already started
-   * @param msg message to throw
+   * If the Dispatcher is already started
    */
-  private throwIfAlreadyStarted(msg: string) {
-    if (this._started) throw new Error(`${msg} when dispatcher already started`)
+  get started() {
+    return this._started
+  }
+
+  /**
+   * Get Commands registry
+   */
+  get registry() {
+    return this._registry
+  }
+
+  /**
+   * Get all possible prefixes
+   */
+  get prefixes() {
+    return [...this._prefixes]
+  }
+
+  /**
+   * Default options for pathToRegexp
+   */
+  static PATHTOREGEXP_DEFAULT: Dispatch.PathToRegexpOptions = {
+    delimiters: [' '],
+    delimiter: ' ',
+    end: false
   }
 }
 
 /**
- * Create dispatcher context
- * @param context context
+ * Create Dispatcher context
+ * @param ctx dispatcher context
  */
-export const createDispatcherContext = (
-  ctx: IDispatcher.Context,
-  dispatcher: Dispatcher
-) => {
-  ctx.state.dispatcher = {
-    dispatcher: dispatcher,
-    prefix: { name: null, length: NaN, detected: false },
-    command: { name: null, command: null },
-    argument: { keys: [] }
-  }
+export function createDispatcherContext(ctx: Dispatch.Context) {
   ctx.params = {}
+  ctx.state.dispatcher = {
+    prefix: { content: null, detected: false, length: NaN },
+    command: { alias: null, resolved: null },
+    [argument]: { keys: [] }
+  }
 }

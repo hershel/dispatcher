@@ -1,2 +1,2 @@
-export * from './Dispatcher'
+export * from './Dispatch'
 export * from './Command'
