@@ -4,6 +4,31 @@
   <em>Command dispatcher for <a href="https://github.com/hershel/hershel">Hershel</a></em>
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/@hershel/dispatcher">
+    <img alt="@hershel/dispatcher on npm" 
+    src="https://badgen.net/npm/v/@hershel/dispatcher">
+  </a>
+  <a href="https://travis-ci.com/hershel/dispatcher">
+    <img alt="Travis CI" 
+    src="https://travis-ci.com/hershel/dispatcher.svg?branch=master">
+  </a>
+  <a href="https://coveralls.io/github/hershel/dispatcher">
+    <img alt="Coveralls"
+    src="https://coveralls.io/repos/github/hershel/dispatcher/badge.svg?branch=dev">
+  </a>
+  <a href="https://github.com/prettier/prettier">
+    <img alt="Prettier"
+    src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg">
+  </a>
+  <a href="https://github.com/hershel/dispatcher/blob/master/LICENSE">
+    <img alt="MIT License"
+    src="https://img.shields.io/badge/License-MIT-yellow.svg">
+  </a>
+</p>
+
+---
+
 `@hershel/dispatcher` adds to your bot the ability to respond to specific commands.
 
 This package has been created in a minimalist, refined and modular spirit. Some functions you may want to have (like role checking to use commands etc...) can be very easily implemented thanks to the internal middlewares of the dispatcher. Let's keep things simple.
