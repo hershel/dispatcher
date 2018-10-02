@@ -33,11 +33,6 @@ export class Dispatcher<C extends Command = Command> {
    * Dispatcher middleware
    */
   public commands() {
-    if (!this.started) {
-      this.use(this.executeCommand)
-      this._started = true
-    }
-
     const composed = compose(this.middleware)
 
     const dispatch: Dispatch.middleware<C> = async (ctx, next) => {
@@ -212,17 +207,6 @@ export class Dispatcher<C extends Command = Command> {
     this.extractArgument = fn
 
     return this
-  }
-
-  /**
-   * ExecuteCommand middleware for Dispatcher
-   */
-  public executeCommand: Dispatch.middleware<C> = async (ctx, next) => {
-    const { resolved } = ctx.state.dispatcher.command
-
-    await resolved.action(ctx)
-
-    next()
   }
 
   /**
