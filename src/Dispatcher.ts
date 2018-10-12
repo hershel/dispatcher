@@ -144,6 +144,7 @@ export class Dispatcher<C extends Command = Command> {
 
     const name = message.content
       .slice(prefix.length)
+      .trim()
       .split(' ')[0]
       .trim()
       .toLowerCase()
@@ -190,10 +191,11 @@ export class Dispatcher<C extends Command = Command> {
         ...command.resolved.options
       }).exec(content) || ([] as RegExpExecArray)
 
-    Object.assign(
-      params,
-      arg.keys.reduce((a, k, i) => ({ [k.name]: p[i + 1], ...a }), {})
-    )
+    const keys = arg.keys.reduce((a, k, i) => {
+      return { [k.name]: p[i + 1], ...a }
+    }, {})
+
+    Object.assign(params, keys)
   }
 
   /**
