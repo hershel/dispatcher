@@ -66,3 +66,24 @@ test('should normalize command input', t => {
   t.is(command.resolved, test)
   t.is(command.alias, 'test')
 })
+
+test('should extract command when command and prefix are separated', t => {
+  const dispatcher = new Dispatcher({
+    prefix: ['!']
+  })
+
+  const test = new commands.Test()
+  dispatcher.register(test)
+
+  const context = createTestContext({
+    message: { content: `! ${test.aliases[0]}` }
+  })
+
+  dispatcher.extractPrefix(context)
+  dispatcher.extractCommand(context)
+
+  const { command } = context.state.dispatcher
+
+  t.is(command.alias, test.aliases[0])
+  t.is(command.resolved, test)
+})
