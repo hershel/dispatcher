@@ -76,7 +76,7 @@ export class Registry<C extends Command> {
 
     assert(command instanceof Command, `${name} should be instance of Command`)
     assert(typeof action === 'function', '.action should be a function')
-    assert(name.length >= 3, 'name length should be >= 3')
+    assert(name.length >= 2, 'name length should be >= 2')
 
     if (aliases.length >= 1) {
       aliases.forEach(a =>
