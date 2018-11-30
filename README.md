@@ -29,6 +29,8 @@
 
 ---
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/hershel/dispatcher.svg)](https://greenkeeper.io/)
+
 `@hershel/dispatcher` adds to your bot the ability to respond to specific commands.
 
 This package has been created in a minimalist, refined and modular spirit. Some functions you may want to have (like role checking to use commands etc...) can be very easily implemented thanks to the internal middlewares of the dispatcher. Let's keep things simple.
