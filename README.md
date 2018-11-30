@@ -25,11 +25,13 @@
     <img alt="MIT License"
     src="https://img.shields.io/badge/License-MIT-yellow.svg">
   </a>
+  <a href="https://greenkeeper.io">
+    <img alt="Greenkeeper"
+    src="https://badges.greenkeeper.io/hershel/dispatcher.svg">
+  </a>
 </p>
 
 ---
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/hershel/dispatcher.svg)](https://greenkeeper.io/)
 
 `@hershel/dispatcher` adds to your bot the ability to respond to specific commands.
 
