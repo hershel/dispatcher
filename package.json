@@ -34,7 +34,7 @@
     "@types/node": "^10.11.0",
     "@types/sinon": "^7.0.0",
     "abstract-logging": "^1.0.0",
-    "ava": "^1.0.0-beta.8",
+    "ava": "^1.2.1",
     "coveralls": "^3.0.2",
     "discord.js": "^11.4.2",
     "hershel": "^2.1.1",
@@ -48,6 +48,6 @@
   "dependencies": {
     "@types/koa-compose": "^3.2.2",
     "koa-compose": "^4.1.0",
-    "path-to-regexp": "^2.4.0"
+    "path-to-regexp": "^3.0.0"
   }
 }
