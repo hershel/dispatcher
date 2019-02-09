@@ -246,7 +246,6 @@ export class Dispatcher<C extends Command = Command> {
    * Default options for pathToRegexp
    */
   static PATHTOREGEXP_DEFAULT: Dispatch.PathToRegexpOptions = {
-    delimiters: [' '],
     delimiter: ' ',
     end: false
   }

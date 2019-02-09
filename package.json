@@ -34,7 +34,7 @@
     "@types/node": "^10.11.0",
     "@types/sinon": "^5.0.2",
     "abstract-logging": "^1.0.0",
-    "ava": "^1.0.0-beta.8",
+    "ava": "^1.2.1",
     "coveralls": "^3.0.2",
     "discord.js": "^11.4.2",
     "hershel": "^2.1.1",
