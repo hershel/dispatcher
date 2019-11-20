@@ -35,7 +35,7 @@ export class Registry<C extends Command> {
    * Delte command from the Registry
    * @param target command object or name to delete
    */
-  public delete(target: Deletable<C> | (Deletable<C>)[]) {
+  public delete(target: Deletable<C> | Deletable<C>[]) {
     if (Array.isArray(target)) {
       target.forEach(t => this.delete.apply(this, [t]))
 
