@@ -48,6 +48,6 @@
   "dependencies": {
     "@types/koa-compose": "^3.2.2",
     "koa-compose": "^4.1.0",
-    "path-to-regexp": "^5.0.0"
+    "path-to-regexp": "^6.1.0"
   }
 }
