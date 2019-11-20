@@ -8,7 +8,7 @@ import { Command } from './Command'
 export namespace Dispatch {
   export type middleware<C extends Command> = compose.Middleware<Context<C>>
   export type params = Record<string, string>
-  export type PathToRegexpOptions = pathToRegexp.RegExpOptions &
+  export type PathToRegexpOptions = pathToRegexp.TokensToRegexpOptions &
     pathToRegexp.ParseOptions
 
   export interface Options {
